@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Placeholder: qAngularity does not use Firebase. The upstream file is intentionally not shipped. -->
+	<key>BUNDLE_ID</key>
+	<string>com.angularity.qangularity</string>
+	<key>PROJECT_ID</key>
+	<string>qangularity-placeholder</string>
+</dict>
+</plist>

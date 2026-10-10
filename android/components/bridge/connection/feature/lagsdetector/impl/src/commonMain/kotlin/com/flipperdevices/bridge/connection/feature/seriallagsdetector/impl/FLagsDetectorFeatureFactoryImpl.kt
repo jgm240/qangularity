@@ -1,0 +1,37 @@
+package com.flipperdevices.bridge.connection.feature.seriallagsdetector.impl
+
+import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeature
+import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
+import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureQualifier
+import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import com.flipperdevices.bridge.connection.feature.restartrpc.api.FRestartRpcFeatureApi
+import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
+import com.flipperdevices.bridge.connection.transport.common.api.serial.FSerialDeviceApi
+import com.flipperdevices.core.di.AppGraph
+import dev.zacsweers.metro.ContributesIntoMap
+import kotlinx.coroutines.CoroutineScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+
+@FDeviceFeatureQualifier(FDeviceFeature.SERIAL_LAGS_DETECTOR)
+@ContributesIntoMap(AppGraph::class, binding<FDeviceFeatureApi.Factory>())
+class FLagsDetectorFeatureFactoryImpl @Inject constructor(
+    private val lagsDetectorFeatureFactory: FLagsDetectorFeatureImpl.InternalFactory
+) : FDeviceFeatureApi.Factory {
+    override suspend fun invoke(
+        unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
+        scope: CoroutineScope,
+        connectedDevice: FConnectedDeviceApi
+    ): FDeviceFeatureApi? {
+        val restartRpcFeature =
+            unsafeFeatureDeviceApi.getUnsafe(FRestartRpcFeatureApi::class)
+        val flipperActionNotifier = (connectedDevice as? FSerialDeviceApi)
+            ?.getActionNotifier()
+            ?: return null
+        return lagsDetectorFeatureFactory(
+            scope = scope,
+            restartRpcFeatureApi = restartRpcFeature,
+            flipperActionNotifier = flipperActionNotifier
+        )
+    }
+}

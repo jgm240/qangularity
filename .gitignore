@@ -1,0 +1,10 @@
+.DS_Store
+local.properties
+*.jks
+*.keystore
+build/
+.gradle/
+.idea/
+*.xcuserstate
+xcuserdata/
+DerivedData/

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="FlipperTheme.SplashTheme" parent="FlipperTheme">
+        <item name="android:windowSplashScreenBackground">@color/background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/pic_splashscreen_dolphin_v31</item>
+    </style>
+</resources>

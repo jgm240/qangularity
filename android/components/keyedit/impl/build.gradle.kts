@@ -1,0 +1,56 @@
+plugins {
+    id("flipper.multiplatform-compose")
+    id("flipper.multiplatform-dependencies")
+    id("flipper.anvil")
+
+    id("kotlinx-serialization")
+}
+
+androidDependencies {
+    implementation(projects.components.core.di)
+    implementation(projects.components.core.ktx)
+    implementation(projects.components.core.log)
+    implementation(projects.components.core.storage)
+    implementation(projects.components.core.preference)
+    implementation(projects.components.core.ui.res)
+    implementation(projects.components.core.ui.ktx)
+    implementation(projects.components.core.ui.theme)
+    implementation(projects.components.core.ui.decompose)
+    implementation(projects.components.core.ui.lifecycle)
+
+    implementation(projects.components.keyedit.api)
+    implementation(projects.components.keyparser.api)
+
+    implementation(projects.components.keyscreen.shared)
+
+    implementation(projects.components.bridge.dao.api)
+    implementation(projects.components.bridge.synchronization.api)
+    implementation(projects.components.bridge.connection.feature.storage.api)
+    implementation(projects.components.inappnotification.api)
+    implementation(projects.components.singleactivity.api)
+    implementation(projects.components.deeplink.api)
+
+    implementation(libs.appcompat)
+
+    implementation(libs.kotlin.serialization.json)
+    implementation(libs.kotlin.immutable.collections)
+
+    // Compose
+    implementation(libs.compose.constraint)
+    implementation(libs.bundles.decompose)
+    implementation(libs.lifecycle.compose)
+
+    implementation(libs.lifecycle.runtime.ktx)
+
+    implementation(libs.okio)
+
+    // Testing
+}
+
+androidHostTestDependencies {
+    implementation(libs.junit)
+    implementation(libs.kotlin.coroutines.test)
+    implementation(libs.roboelectric)
+    implementation(libs.ktx.testing)
+    implementation(libs.mockk)
+}

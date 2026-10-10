@@ -1,0 +1,132 @@
+package com.flipperdevices.wearable.emulate.impl.helper
+
+import androidx.compose.runtime.Stable
+import com.flipperdevices.bridge.dao.api.model.FlipperKeyType
+import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.log.info
+import com.flipperdevices.keyemulate.model.EmulateProgress
+import com.flipperdevices.wearable.emulate.common.ipcemulate.requests.ConnectStatus
+import com.flipperdevices.wearable.emulate.common.ipcemulate.requests.EmulateStatus
+import com.flipperdevices.wearable.emulate.impl.viewmodel.KeyToEmulate
+import com.flipperdevices.wearable.emulate.model.ChannelClientState
+import dev.zacsweers.metro.ContributesBinding
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
+
+interface WearStateMachineHelper {
+    fun getState(): StateFlow<WearEmulateState>
+
+    suspend fun onStatesUpdated(
+        channelState: ChannelClientState,
+        connectionState: ConnectionTesterState,
+        flipperState: ConnectStatus,
+        emulateState: EmulateStatus,
+        keyToEmulate: KeyToEmulate
+    )
+}
+
+@SingleIn(AppGraph::class)
+@ContributesBinding(AppGraph::class, binding<WearStateMachineHelper>())
+class WearStateMachineHelperImpl @Inject constructor(
+    private val flipperStatusHelper: FlipperStatusHelper,
+    private val connectionHelper: ConnectionHelper
+) : WearStateMachineHelper, LogTagProvider {
+
+    override val TAG: String = "WearStateMachineHelper"
+
+    private val state = MutableStateFlow<WearEmulateState>(WearEmulateState.NotInitialized)
+    override fun getState() = state.asStateFlow()
+
+    override suspend fun onStatesUpdated(
+        channelState: ChannelClientState,
+        connectionState: ConnectionTesterState,
+        flipperState: ConnectStatus,
+        emulateState: EmulateStatus,
+        keyToEmulate: KeyToEmulate
+    ) {
+        info { "#processStates $channelState $connectionState $flipperState $emulateState" }
+
+        when (channelState) {
+            ChannelClientState.DISCONNECTED -> {
+                state.emit(WearEmulateState.NotInitialized)
+                return
+            }
+            ChannelClientState.FINDING_NODE -> {
+                state.emit(WearEmulateState.NodeFinding)
+                return
+            }
+            ChannelClientState.NOT_FOUND_NODE -> {
+                state.emit(WearEmulateState.NotFoundNode)
+                return
+            }
+            ChannelClientState.CONNECTING -> {
+                state.emit(WearEmulateState.TestConnection)
+                return
+            }
+            ChannelClientState.OPENED -> {}
+        }
+
+        when (connectionState) {
+            ConnectionTesterState.NOT_CONNECTED -> {
+                state.emit(WearEmulateState.TestConnection)
+                connectionHelper.testConnection()
+                return
+            }
+            ConnectionTesterState.CONNECTED -> flipperStatusHelper.onSubscribe()
+        }
+
+        when (flipperState) {
+            ConnectStatus.UNSUPPORTED -> {
+                state.emit(WearEmulateState.UnsupportedFlipper)
+                return
+            }
+            ConnectStatus.READY ->
+                state.emit(WearEmulateState.ReadyForEmulate(keyToEmulate.keyType))
+            else -> {
+                state.emit(WearEmulateState.ConnectingToFlipper)
+                return
+            }
+        }
+
+        when (emulateState) {
+            EmulateStatus.EMULATING -> {
+                state.emit(WearEmulateState.Emulating(keyToEmulate.keyType, EmulateProgress.Infinite))
+                return
+            }
+            else -> return
+        }
+    }
+}
+
+@Stable
+sealed class WearEmulateState {
+    open val keyType: FlipperKeyType? = null
+
+    data object NotInitialized : WearEmulateState()
+
+    data object NodeFinding : WearEmulateState()
+
+    data object NotFoundNode : WearEmulateState()
+
+    data object TestConnection : WearEmulateState()
+
+    data object ConnectingToFlipper : WearEmulateState()
+
+    data object UnsupportedFlipper : WearEmulateState()
+
+    @Stable
+    data class ReadyForEmulate(
+        override val keyType: FlipperKeyType?
+    ) : WearEmulateState()
+
+    @Stable
+    data class Emulating(
+        override val keyType: FlipperKeyType?,
+        val progress: EmulateProgress
+    ) : WearEmulateState()
+}
